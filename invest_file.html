@@ -1,0 +1,3264 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>InvestX - Advanced Investment Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --text: #172033;
+    --muted: #718096;
+    --border: #e5e9f2;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --green: #16a34a;
+    --red: #dc2626;
+    --sidebar: #101827;
+    --sidebar-text: #cbd5e1;
+    --shadow: 0 8px 25px rgba(15, 23, 42, .06);
+}
+.allocation-modal .modal-content {
+    width: 520px;
+}
+.allocation-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+}
+.allocation-card {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg);
+}
+
+.allocation-input {
+    width: 58px;
+    padding: 6px 7px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--text);
+    font-weight: 700;
+    text-align: right;
+}
+
+.allocation-input:focus {
+    outline: 2px solid rgba(15,118,110,.25);
+    border-color: var(--primary);
+}
+
+.allocation-target {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.allocation-status {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: #e9f6f1;
+    color: #21645a;
+    font-size: 12px;
+}
+
+.allocation-status.show {
+    display: block;
+}
+
+.allocation-status.error {
+    background: #fce9e7;
+    color: var(--red);
+}
+.allocation-card strong {
+    display: block;
+    margin-top: 5px;
+}
+.allocation-card .gap {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 12px;
+}
+.allocation-card.overweight .gap {
+    color: var(--red);
+}
+.allocation-card.underweight .gap {
+    color: var(--green);
+}
+.allocation-recommendation {
+    padding: 13px;
+    border-left: 3px solid var(--primary);
+    border-radius: 7px;
+    background: #edf8f4;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.45;
+}
+.dark .allocation-recommendation {
+    background: #1b3532;
+}
+
+.dark {
+    --bg: #0b1120;
+    --card: #111827;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #253047;
+    --sidebar: #070c16;
+    --sidebar-text: #cbd5e1;
+    --shadow: 0 8px 25px rgba(0,0,0,.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Inter, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: .3s;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100vh;
+    background: var(--sidebar);
+    color: white;
+    padding: 25px 15px;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    padding: 10px 15px 35px;
+}
+
+.logo span {
+    color: #60a5fa;
+}
+
+.nav-title {
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+    padding: 15px;
+    letter-spacing: 1px;
+}
+
+.nav a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px 15px;
+    margin: 5px 0;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    border-radius: 9px;
+    transition: .2s;
+}
+
+.nav a:hover,
+.nav a.active {
+    background: #2563eb;
+    color: white;
+}
+
+.sidebar-bottom {
+    position: absolute;
+    bottom: 25px;
+    left: 15px;
+    right: 15px;
+}
+
+.main {
+    margin-left: 250px;
+    padding: 25px 30px;
+    max-width: 1700px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.topbar h1 {
+    font-size: 28px;
+}
+
+.subtitle {
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+.top-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.icon-btn {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 10px;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    padding: 8px 12px;
+    border-radius: 30px;
+    box-shadow: var(--shadow);
+}
+
+.avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-weight: bold;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-label {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: #eff6ff;
+}
+
+.card h2 {
+    margin: 12px 0 5px;
+    font-size: 26px;
+}
+
+.green {
+    color: var(--green);
+}
+
+.red {
+    color: var(--red);
+}
+
+.small {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.grid-main {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.chart-box {
+    height: 330px;
+}
+
+.periods {
+    display: flex;
+    gap: 5px;
+}
+
+.periods button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 7px;
+    padding: 6px 10px;
+}
+
+.periods button.active,
+.periods button:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.allocation-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+.donut-box {
+    height: 250px;
+}
+
+.legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+}
+
+.legend-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+
+.blue {
+    background: #2563eb;
+}
+
+.purple {
+    background: #7c3aed;
+}
+
+.orange {
+    background: #f59e0b;
+}
+
+.green-dot {
+    background: #16a34a;
+}
+
+.table-panel {
+    margin-bottom: 22px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.search {
+    padding: 10px 13px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 8px;
+    min-width: 220px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 13px 10px;
+}
+
+td {
+    padding: 16px 10px;
+    border-top: 1px solid var(--border);
+}
+
+.stock-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stock-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: grid;
+    place-items: center;
+    font-weight: bold;
+}
+
+.badge {
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-buy {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-sell {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.watch-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.watch-item:last-child {
+    border-bottom: none;
+}
+
+.watch-symbol {
+    font-weight: bold;
+}
+
+.watch-price {
+    font-weight: bold;
+}
+
+.watch-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.watch-remove {
+    padding: 3px 6px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.watch-remove:hover {
+    background: #fce9e7;
+    color: var(--red);
+}
+
+.watch-modal .modal-content {
+    width: 430px;
+}
+
+.transactions-modal .modal-content {
+    width: 760px;
+    max-width: 94%;
+}
+
+.transaction-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.transaction-stat {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+}
+
+.transaction-stat strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 17px;
+}
+
+.transaction-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.transaction-filter {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.transaction-table-wrap {
+    max-height: 310px;
+    overflow: auto;
+}
+
+@media(max-width:550px) {
+    .transaction-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .transaction-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+.alert-box {
+    background: #eff6ff;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    color: #1e40af;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    width: 430px;
+    max-width: 92%;
+    background: var(--card);
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 22px;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 11px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.mobile-menu {
+    display: none;
+}
+
+@media(max-width:1200px) {
+    .cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-main {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(max-width:800px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: .3s;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 18px;
+    }
+
+    .mobile-menu {
+        display: block;
+    }
+
+    .bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar {
+        gap: 15px;
+    }
+
+    .profile span {
+        display: none;
+    }
+
+    .allocation-wrap {
+        grid-template-columns: 1fr;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+}
+
+@media(max-width:550px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar h1 {
+        font-size: 22px;
+    }
+
+    .top-actions .icon-btn:first-child {
+        display: none;
+    }
+}
+
+/* Advanced dashboard layer */
+:root {
+    --bg: #eef3f2;
+    --card: #ffffff;
+    --text: #13211f;
+    --muted: #70817e;
+    --border: #dfe8e5;
+    --primary: #0f766e;
+    --primary-dark: #115e59;
+    --green: #16856f;
+    --red: #c84b4b;
+    --sidebar: #102a2a;
+    --sidebar-text: #c6d9d4;
+    --shadow: 0 14px 40px rgba(24, 57, 53, .08);
+}
+
+body {
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 90% 0%, #d7ebe5 0, transparent 32%), var(--bg);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+#dashboard,
+#markets,
+#portfolio,
+#watchlist,
+#transactions {
+    scroll-margin-top: 24px;
+}
+
+.sidebar {
+    background: linear-gradient(180deg, #102a2a 0%, #173d3b 100%);
+    padding: 28px 16px;
+}
+
+.logo {
+    letter-spacing: -.8px;
+}
+
+.logo span {
+    color: #70d1ba;
+}
+
+.nav a:hover,
+.nav a.active {
+    background: #d8f1e9;
+    color: #14554e;
+}
+
+.main {
+    padding: 30px 36px 48px;
+}
+
+.topbar {
+    margin-bottom: 22px;
+}
+
+.topbar h1 {
+    font-size: 30px;
+    letter-spacing: -.7px;
+}
+
+.subtitle {
+    font-size: 14px;
+}
+
+.icon-btn {
+    background: rgba(255,255,255,.78);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(24, 57, 53, .06);
+}
+
+.profile {
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    box-shadow: none;
+}
+
+.avatar {
+    background: #e2a04b;
+}
+
+.card,
+.panel {
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.card {
+    position: relative;
+    overflow: hidden;
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+    right: -24px;
+    bottom: -32px;
+    width: 92px;
+    height: 92px;
+    border: 16px solid rgba(15,118,110,.08);
+    border-radius: 50%;
+}
+
+.card-icon {
+    background: #e4f3ee;
+}
+
+.market-strip {
+    display: grid;
+    grid-template-columns: 1.2fr repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+}
+
+.market-item {
+    background: var(--card);
+    padding: 13px 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.market-item:first-child {
+    background: #e2f2ed;
+}
+
+.market-name {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .7px;
+}
+
+.market-price {
+    display: block;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+.market-change {
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.card h2 {
+    font-size: 25px;
+    letter-spacing: -.5px;
+}
+
+.quick-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 18px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,.72);
+}
+
+.quick-actions strong {
+    font-size: 14px;
+}
+
+.quick-actions .toolbar {
+    gap: 8px;
+}
+
+.dashboard-pulse {
+    display: grid;
+    grid-template-columns: 1.35fr repeat(3, 1fr);
+    gap: 1px;
+    margin: 22px 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--border);
+    box-shadow: var(--shadow);
+}
+
+.pulse-main,
+.pulse-stat {
+    min-height: 104px;
+    padding: 17px 19px;
+    background: var(--card);
+}
+
+.pulse-main {
+    background: linear-gradient(135deg, #123b38, #1d655b);
+    color: white;
+}
+
+.pulse-main .small {
+    color: #c4e3db;
+}
+
+.pulse-title {
+    margin: 7px 0 4px;
+    font-size: 20px;
+    letter-spacing: -.4px;
+}
+
+.pulse-stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.pulse-stat strong {
+    margin-top: 7px;
+    font-size: 19px;
+}
+
+.pulse-bar {
+    height: 5px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 5px;
+    background: rgba(255,255,255,.2);
+}
+
+.pulse-bar span {
+    display: block;
+    width: 72%;
+    height: 100%;
+    border-radius: inherit;
+    background: #f1c274;
+}
+
+.portfolio-health {
+    display: grid;
+    grid-template-columns: 1.2fr repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.health-item {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg);
+}
+
+.health-item:first-child {
+    background: #e9f6f1;
+    border-color: #cce8df;
+}
+
+.health-item strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 16px;
+}
+
+.health-meter {
+    height: 5px;
+    margin-top: 9px;
+    border-radius: 5px;
+    background: #cfe6df;
+}
+
+.health-meter span {
+    display: block;
+    width: 78%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+}
+
+.btn {
+    border-radius: 9px;
+}
+
+.btn-primary {
+    background: var(--primary);
+}
+
+.panel-header {
+    margin-bottom: 18px;
+}
+
+.panel-title {
+    letter-spacing: -.2px;
+}
+
+.table-panel {
+    overflow: hidden;
+}
+
+th {
+    letter-spacing: .65px;
+}
+
+td {
+    padding: 15px 10px;
+}
+
+tr:hover td {
+    background: #f4faf8;
+}
+
+.stock-logo {
+    background: #e4f3ee;
+    color: #0f766e;
+}
+
+.alert-box {
+    background: #edf8f4;
+    border-left: 3px solid #47a993;
+    color: #21645a;
+}
+
+.dark {
+    --bg: #0e1c1c;
+    --card: #162727;
+    --text: #eff8f5;
+    --muted: #9bb3ae;
+    --border: #2a4441;
+    --sidebar: #091717;
+    --shadow: 0 14px 40px rgba(0,0,0,.22);
+}
+
+.dark .market-item:first-child,
+.dark .quick-actions {
+    background: #1b3532;
+}
+
+.dark .health-item:first-child {
+    background: #1b3532;
+    border-color: #2a5550;
+}
+
+.dark tr:hover td {
+    background: #1b3532;
+}
+
+.management-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1.3fr .9fr;
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.management-panel {
+    min-width: 0;
+}
+
+.management-panel .panel-header {
+    align-items: flex-start;
+}
+
+.management-count {
+    min-width: 25px;
+    height: 25px;
+    padding: 0 7px;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    background: #fbe7c7;
+    color: #8a5a1f;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.management-alert {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.management-alert:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.alert-mark {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #edf8f4;
+}
+
+.alert-mark.warning {
+    background: #fff3df;
+}
+
+.alert-mark.danger {
+    background: #fce9e7;
+}
+
+.alert-copy {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.alert-copy strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.alert-dismiss {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 17px;
+    line-height: 1;
+}
+
+.analytics-score {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px;
+    margin-bottom: 17px;
+    border-radius: 10px;
+    background: #e9f6f1;
+}
+
+.score-ring {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: conic-gradient(#16856f 0 78%, #cfe6df 78% 100%);
+    color: #14554e;
+    font-weight: 800;
+    position: relative;
+}
+
+.score-ring::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    background: #e9f6f1;
+    border-radius: 50%;
+}
+
+.score-ring span {
+    position: relative;
+    z-index: 1;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.metric {
+    padding: 11px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 17px;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.setting-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.setting-row label {
+    color: var(--text);
+}
+
+.setting-row select {
+    padding: 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.switch {
+    width: 38px;
+    height: 21px;
+    position: relative;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    border-radius: 20px;
+    background: #bdcbc7;
+    transition: .2s;
+}
+
+.slider::before {
+    content: "";
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: white;
+    transition: .2s;
+}
+
+.switch input:checked + .slider {
+    background: var(--primary);
+}
+
+.switch input:checked + .slider::before {
+    transform: translateX(17px);
+}
+
+.compact-table td,
+.compact-table th {
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+.dark .analytics-score {
+    background: #1b3532;
+}
+
+.dark .score-ring,
+.dark .score-ring::after {
+    color: #bce8da;
+    background-color: #1b3532;
+}
+
+@media(max-width:1200px) {
+    .management-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .management-panel:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media(max-width:800px) {
+    .management-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .management-panel:last-child {
+        grid-column: auto;
+    }
+}
+
+@media(max-width:1200px) {
+    .market-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width:800px) {
+    .main {
+        padding: 20px 16px 36px;
+    }
+
+    .market-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .dashboard-pulse,
+    .portfolio-health {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pulse-main {
+        grid-column: 1 / -1;
+    }
+}
+
+@media(max-width:550px) {
+    .dashboard-pulse,
+    .portfolio-health {
+        grid-template-columns: 1fr;
+    }
+
+    .pulse-main {
+        grid-column: auto;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+    <div class="logo">
+        Invest<span>X</span>
+    </div>
+
+    <div class="nav-title">Main Menu</div>
+
+    <nav class="nav">
+
+        <a href="#dashboard" class="active">
+            📊 <span>Dashboard</span>
+        </a>
+
+        <a href="#portfolio">
+            💼 <span>My Portfolio</span>
+        </a>
+
+        <a href="#markets">
+            📈 <span>Markets</span>
+        </a>
+
+        <a href="#watchlist">
+            ⭐ <span>Watchlist</span>
+        </a>
+
+        <a href="#transactions">
+            💰 <span>Transactions</span>
+        </a>
+
+    </nav>
+
+    <div class="nav-title">Management</div>
+
+    <nav class="nav">
+
+        <a href="#alerts">
+            🔔 <span>Alerts</span>
+        </a>
+
+        <a href="#analytics">
+            📊 <span>Analytics</span>
+        </a>
+
+        <a href="#settings">
+            ⚙️ <span>Settings</span>
+        </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <a href="#" class="nav">
+            ❓ Help & Support
+        </a>
+
+    </div>
+
+</aside>
+
+
+<!-- MAIN -->
+
+<main class="main" id="dashboard">
+
+    <!-- TOP BAR -->
+
+    <div class="topbar">
+
+        <div>
+
+            <button
+                class="icon-btn mobile-menu"
+                onclick="toggleSidebar()">
+                ☰
+            </button>
+
+            <h1>Good morning, Naga Sai 👋</h1>
+
+            <p class="subtitle">
+                Here's what's happening with your investments today.
+            </p>
+
+        </div>
+
+        <div class="top-actions">
+
+            <button
+                class="icon-btn"
+                onclick="toggleDarkMode()">
+                🌙
+            </button>
+
+            <button class="icon-btn">
+                🔔
+            </button>
+
+            <div class="profile">
+
+                <div class="avatar">
+                    S
+                </div>
+
+                <span>
+                    Naga Sai
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <section class="market-strip" id="markets" aria-label="Market snapshot">
+        <div class="market-item">
+            <div>
+                <span class="market-name">Market pulse</span>
+                <strong class="market-price">Markets are positive</strong>
+            </div>
+            <span class="market-change green">LIVE</span>
+        </div>
+        <div class="market-item">
+            <div><span class="market-name">NIFTY 50</span><strong class="market-price">24,482.35</strong></div>
+            <span class="market-change green">+0.68%</span>
+        </div>
+        <div class="market-item">
+            <div><span class="market-name">SENSEX</span><strong class="market-price">80,235.59</strong></div>
+            <span class="market-change green">+0.54%</span>
+        </div>
+        <div class="market-item">
+            <div><span class="market-name">USD / INR</span><strong class="market-price">83.91</strong></div>
+            <span class="market-change red">-0.12%</span>
+        </div>
+    </section>
+
+
+    <section class="dashboard-pulse" aria-label="Dashboard pulse">
+        <div class="pulse-main">
+            <span class="small">TODAY'S POSITION</span>
+            <div class="pulse-title">Your portfolio is ahead of the market</div>
+            <span class="small">You are outperforming NIFTY 50 by 3.14% this month.</span>
+            <div class="pulse-bar"><span></span></div>
+        </div>
+        <div class="pulse-stat"><span class="small">Best performer</span><strong class="green">RELIANCE</strong><span class="small">+13.47% return</span></div>
+        <div class="pulse-stat"><span class="small">Cash available</span><strong>₹84,520</strong><span class="small">10% of portfolio</span></div>
+        <div class="pulse-stat"><span class="small">Next review</span><strong>18 Aug</strong><span class="small">Allocation check</span></div>
+    </section>
+
+
+    <!-- SUMMARY CARDS -->
+
+    <section class="cards">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <span class="card-label">
+                    Portfolio Value
+                </span>
+
+                <div class="card-icon">
+                    💼
+                </div>
+
+            </div>
+
+            <h2 id="portfolioValue">
+                ₹8,45,230
+            </h2>
+
+            <span class="green">
+                ↑ 4.82%
+            </span>
+
+            <span class="small">
+                vs last month
+            </span>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <span class="card-label">
+                    Total Investment
+                </span>
+
+                <div class="card-icon">
+                    💰
+                </div>
+
+            </div>
+
+            <h2>
+                ₹7,50,000
+            </h2>
+
+            <span class="small">
+                12 assets
+            </span>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <span class="card-label">
+                    Total Profit
+                </span>
+
+                <div class="card-icon">
+                    📈
+                </div>
+
+            </div>
+
+            <h2 class="green">
+                +₹95,230
+            </h2>
+
+            <span class="green">
+                +12.69%
+            </span>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <span class="card-label">
+                    Today's P&L
+                </span>
+
+                <div class="card-icon">
+                    ⚡
+                </div>
+
+            </div>
+
+            <h2 class="green">
+                +₹4,820
+            </h2>
+
+            <span class="green">
+                +0.57%
+            </span>
+
+        </div>
+
+    </section>
+
+    <section class="quick-actions">
+        <strong>Portfolio actions</strong>
+        <div class="toolbar">
+            <button class="btn btn-outline" onclick="exportPortfolioReport()">↥ Export report</button>
+            <button class="btn btn-outline" onclick="openAllocationAnalysis()">◒ Analyze allocation</button>
+            <button class="btn btn-primary" onclick="openModal()">＋ New transaction</button>
+        </div>
+    </section>
+
+
+    <!-- PERFORMANCE + ALLOCATION -->
+
+    <section class="grid-main">
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Portfolio Performance
+                    </div>
+
+                    <span class="small">
+                        Portfolio growth over time
+                    </span>
+
+                </div>
+
+                <div class="periods">
+
+                    <button type="button" onclick="updatePerformance('1W', this)">1W</button>
+                    <button type="button" onclick="updatePerformance('1M', this)">1M</button>
+                    <button type="button" class="active" onclick="updatePerformance('6M', this)">6M</button>
+                    <button type="button" onclick="updatePerformance('1Y', this)">1Y</button>
+                    <button type="button" onclick="updatePerformance('ALL', this)">ALL</button>
+
+                </div>
+
+            </div>
+
+            <div class="chart-box">
+
+                <canvas id="performanceChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Asset Allocation
+                    </div>
+
+                    <span class="small">
+                        Based on current value
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="allocation-wrap">
+
+                <div class="donut-box">
+
+                    <canvas id="allocationChart"></canvas>
+
+                </div>
+
+                <div>
+
+                    <div class="legend-item">
+
+                        <div class="legend-left">
+                            <span class="dot blue"></span>
+                            Stocks
+                        </div>
+
+                        <strong>50%</strong>
+
+                    </div>
+
+                    <div class="legend-item">
+
+                        <div class="legend-left">
+                            <span class="dot purple"></span>
+                            ETFs
+                        </div>
+
+                        <strong>25%</strong>
+
+                    </div>
+
+                    <div class="legend-item">
+
+                        <div class="legend-left">
+                            <span class="dot orange"></span>
+                            Bonds
+                        </div>
+
+                        <strong>15%</strong>
+
+                    </div>
+
+                    <div class="legend-item">
+
+                        <div class="legend-left">
+                            <span class="dot green-dot"></span>
+                            Cash
+                        </div>
+
+                        <strong>10%</strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- HOLDINGS -->
+
+    <section class="panel table-panel" id="portfolio">
+
+        <div class="panel-header">
+
+            <div>
+
+                <div class="panel-title">
+                    My Holdings
+                </div>
+
+                <span class="small">
+                    Your current investments
+                </span>
+
+            </div>
+
+            <div class="toolbar">
+
+                <input
+                    type="text"
+                    class="search"
+                    id="searchInput"
+                    placeholder="Search stocks..."
+                    onkeyup="searchStocks()"
+                >
+
+                <button
+                    class="btn btn-primary"
+                    onclick="openModal()">
+                    + Add Transaction
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="portfolio-health">
+            <div class="health-item">
+                <span class="small">Portfolio health</span>
+                <strong>Strong · 78/100</strong>
+                <div class="health-meter"><span></span></div>
+            </div>
+            <div class="health-item"><span class="small">Day change</span><strong class="green">+₹4,820</strong></div>
+            <div class="health-item"><span class="small">Realized gains</span><strong>₹22,640</strong></div>
+            <div class="health-item"><span class="small">Risk level</span><strong>Moderate</strong></div>
+        </div>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Asset</th>
+                        <th>Quantity</th>
+                        <th>Avg. Price</th>
+                        <th>Current Price</th>
+                        <th>Invested</th>
+                        <th>Current Value</th>
+                        <th>P&L</th>
+                        <th>Return</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="holdingsTable">
+
+                    <tr>
+
+                        <td>
+
+                            <div class="stock-name">
+
+                                <div class="stock-logo">
+                                    R
+                                </div>
+
+                                <div>
+                                    <strong>RELIANCE</strong>
+                                    <div class="small">
+                                        Reliance Industries
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>25</td>
+
+                        <td>₹2,450</td>
+
+                        <td>₹2,780</td>
+
+                        <td>₹61,250</td>
+
+                        <td>₹69,500</td>
+
+                        <td class="green">
+                            +₹8,250
+                        </td>
+
+                        <td class="green">
+                            +13.47%
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>
+
+                            <div class="stock-name">
+
+                                <div class="stock-logo">
+                                    T
+                                </div>
+
+                                <div>
+                                    <strong>TCS</strong>
+                                    <div class="small">
+                                        Tata Consultancy Services
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>15</td>
+
+                        <td>₹3,200</td>
+
+                        <td>₹3,450</td>
+
+                        <td>₹48,000</td>
+
+                        <td>₹51,750</td>
+
+                        <td class="green">
+                            +₹3,750
+                        </td>
+
+                        <td class="green">
+                            +7.81%
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>
+
+                            <div class="stock-name">
+
+                                <div class="stock-logo">
+                                    I
+                                </div>
+
+                                <div>
+                                    <strong>INFY</strong>
+                                    <div class="small">
+                                        Infosys Limited
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>30</td>
+
+                        <td>₹1,450</td>
+
+                        <td>₹1,390</td>
+
+                        <td>₹43,500</td>
+
+                        <td>₹41,700</td>
+
+                        <td class="red">
+                            -₹1,800
+                        </td>
+
+                        <td class="red">
+                            -4.14%
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>
+
+                            <div class="stock-name">
+
+                                <div class="stock-logo">
+                                    H
+                                </div>
+
+                                <div>
+                                    <strong>HDFCBANK</strong>
+                                    <div class="small">
+                                        HDFC Bank
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <td>40</td>
+
+                        <td>₹1,550</td>
+
+                        <td>₹1,720</td>
+
+                        <td>₹62,000</td>
+
+                        <td>₹68,800</td>
+
+                        <td class="green">
+                            +₹6,800
+                        </td>
+
+                        <td class="green">
+                            +10.97%
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- BOTTOM GRID -->
+
+    <section class="bottom-grid">
+
+        <!-- WATCHLIST -->
+
+        <div class="panel" id="watchlist">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Watchlist
+                    </div>
+
+                    <span class="small">
+                        Stocks you're monitoring
+                    </span>
+
+                </div>
+
+                <button class="btn btn-outline" onclick="openWatchlistModal()">
+                    + Add
+                </button>
+
+            </div>
+
+
+            <div class="watch-item">
+
+                <div>
+
+                    <div class="watch-symbol">
+                        TATAMOTORS
+                    </div>
+
+                    <span class="small">
+                        Tata Motors
+                    </span>
+
+                </div>
+
+                <div style="text-align:right">
+
+                    <div class="watch-price">
+                        ₹978.40
+                    </div>
+
+                    <span class="green">
+                        +2.14%
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="watch-item">
+
+                <div>
+
+                    <div class="watch-symbol">
+                        SBIN
+                    </div>
+
+                    <span class="small">
+                        State Bank of India
+                    </span>
+
+                </div>
+
+                <div style="text-align:right">
+
+                    <div class="watch-price">
+                        ₹842.10
+                    </div>
+
+                    <span class="green">
+                        +1.28%
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="watch-item">
+
+                <div>
+
+                    <div class="watch-symbol">
+                        ITC
+                    </div>
+
+                    <span class="small">
+                        ITC Limited
+                    </span>
+
+                </div>
+
+                <div style="text-align:right">
+
+                    <div class="watch-price">
+                        ₹512.60
+                    </div>
+
+                    <span class="red">
+                        -0.64%
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ALERTS -->
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Portfolio Insights
+                    </div>
+
+                    <span class="small">
+                        Smart observations
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="alert-box">
+                📈 Your portfolio is up 12.69% overall.
+            </div>
+
+            <div class="alert-box">
+                💡 RELIANCE is your best performing holding.
+            </div>
+
+            <div class="alert-box">
+                ⚠️ INFY is currently down 4.14%.
+            </div>
+
+            <div class="alert-box">
+                🎯 Your portfolio contains 12 different assets.
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- TRANSACTIONS -->
+
+    <section class="panel table-panel" id="transactions" style="margin-top:22px">
+
+        <div class="panel-header">
+
+            <div>
+
+                <div class="panel-title">
+                    Recent Transactions
+                </div>
+
+                <span class="small">
+                    Latest portfolio activity
+                </span>
+
+            </div>
+
+            <button class="btn btn-outline" onclick="openTransactionsModal()">
+                View All
+            </button>
+
+        </div>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Date</th>
+                        <th>Asset</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+
+                        <td>10 Aug 2026</td>
+
+                        <td>
+                            <strong>RELIANCE</strong>
+                        </td>
+
+                        <td>
+                            <span class="badge badge-buy">
+                                BUY
+                            </span>
+                        </td>
+
+                        <td>10</td>
+
+                        <td>₹2,750</td>
+
+                        <td>₹27,500</td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>08 Aug 2026</td>
+
+                        <td>
+                            <strong>TCS</strong>
+                        </td>
+
+                        <td>
+                            <span class="badge badge-buy">
+                                BUY
+                            </span>
+                        </td>
+
+                        <td>5</td>
+
+                        <td>₹3,420</td>
+
+                        <td>₹17,100</td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td>05 Aug 2026</td>
+
+                        <td>
+                            <strong>INFY</strong>
+                        </td>
+
+                        <td>
+                            <span class="badge badge-sell">
+                                SELL
+                            </span>
+                        </td>
+
+                        <td>10</td>
+
+                        <td>₹1,400</td>
+
+                        <td>₹14,000</td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+    <section class="management-grid">
+        <div class="panel management-panel" id="alerts">
+            <div class="panel-header">
+                <div>
+                    <div class="panel-title">Alerts</div>
+                    <span class="small">Important portfolio signals</span>
+                </div>
+                <span class="management-count" id="alertCount">3</span>
+            </div>
+
+            <div class="management-alert">
+                <span class="alert-mark">↗</span>
+                <div class="alert-copy"><strong>RELIANCE crossed your target</strong><span class="small">₹2,780 is 13.47% above average price</span></div>
+                <button class="alert-dismiss" onclick="dismissAlert(this)" aria-label="Dismiss alert">×</button>
+            </div>
+            <div class="management-alert">
+                <span class="alert-mark warning">!</span>
+                <div class="alert-copy"><strong>Allocation needs review</strong><span class="small">Stocks are 8% above your target mix</span></div>
+                <button class="alert-dismiss" onclick="dismissAlert(this)" aria-label="Dismiss alert">×</button>
+            </div>
+            <div class="management-alert">
+                <span class="alert-mark danger">↓</span>
+                <div class="alert-copy"><strong>INFY is underperforming</strong><span class="small">Down 4.14% from your average price</span></div>
+                <button class="alert-dismiss" onclick="dismissAlert(this)" aria-label="Dismiss alert">×</button>
+            </div>
+        </div>
+
+        <div class="panel management-panel" id="analytics">
+            <div class="panel-header">
+                <div>
+                    <div class="panel-title">Analytics</div>
+                    <span class="small">Risk and diversification snapshot</span>
+                </div>
+                <span class="small">Updated now</span>
+            </div>
+            <div class="analytics-score">
+                <div class="score-ring"><span>78</span></div>
+                <div><strong>Healthy portfolio score</strong><div class="small">Good diversification with moderate risk</div></div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric"><span class="small">Annualized return</span><strong class="green">18.4%</strong></div>
+                <div class="metric"><span class="small">Volatility</span><strong>12.8%</strong></div>
+                <div class="metric"><span class="small">Dividend yield</span><strong>2.34%</strong></div>
+                <div class="metric"><span class="small">Largest holding</span><strong>18.2%</strong></div>
+            </div>
+        </div>
+
+        <div class="panel management-panel" id="settings">
+            <div class="panel-header">
+                <div>
+                    <div class="panel-title">Settings</div>
+                    <span class="small">Personalize your workspace</span>
+                </div>
+            </div>
+            <div class="setting-row"><label for="currencySetting">Currency</label><select id="currencySetting"><option>INR (₹)</option><option>USD ($)</option><option>EUR (€)</option></select></div>
+            <div class="setting-row"><label for="refreshSetting">Live price refresh</label><label class="switch"><input id="refreshSetting" type="checkbox" checked onchange="togglePriceRefresh(this)"><span class="slider"></span></label></div>
+            <div class="setting-row"><label for="densitySetting">Compact tables</label><label class="switch"><input id="densitySetting" type="checkbox" onchange="toggleTableDensity(this)"><span class="slider"></span></label></div>
+        </div>
+    </section>
+
+</main>
+
+
+<!-- ADD TRANSACTION MODAL -->
+
+<div class="modal" id="transactionModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Add Transaction</h2>
+
+            <button
+                class="close"
+                onclick="closeModal()">
+                ×
+            </button>
+
+        </div>
+
+
+        <form onsubmit="addTransaction(event)">
+
+            <div class="form-group">
+
+                <label>Stock Symbol</label>
+
+                <input
+                    type="text"
+                    id="symbol"
+                    placeholder="e.g. RELIANCE"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Transaction Type</label>
+
+                <select id="transactionType">
+
+                    <option value="BUY">
+                        Buy
+                    </option>
+
+                    <option value="SELL">
+                        Sell
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Quantity</label>
+
+                <input
+                    type="number"
+                    id="quantity"
+                    min="1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>Price per Share</label>
+
+                <input
+                    type="number"
+                    id="price"
+                    min="0"
+                    step="0.01"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    onclick="closeModal()">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Add Transaction
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- TRANSACTION HISTORY MODAL -->
+
+<div class="modal transactions-modal" id="transactionsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2>Transaction history</h2>
+                <span class="small">Complete portfolio activity</span>
+            </div>
+            <button class="close" onclick="closeTransactionsModal()">×</button>
+        </div>
+
+        <div class="transaction-summary">
+            <div class="transaction-stat"><span class="small">Total invested</span><strong>₹58,600</strong></div>
+            <div class="transaction-stat"><span class="small">Buy orders</span><strong>₹44,600</strong></div>
+            <div class="transaction-stat"><span class="small">Sell orders</span><strong>₹14,000</strong></div>
+        </div>
+
+        <div class="transaction-toolbar">
+            <span class="small" id="transactionCount">5 transactions</span>
+            <select class="transaction-filter" onchange="filterTransactions(this.value)">
+                <option value="ALL">All transactions</option>
+                <option value="BUY">Buy orders</option>
+                <option value="SELL">Sell orders</option>
+            </select>
+        </div>
+
+        <div class="transaction-table-wrap">
+            <table id="transactionHistoryTable">
+                <thead><tr><th>Date</th><th>Asset</th><th>Type</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead>
+                <tbody>
+                    <tr data-transaction-type="BUY"><td>10 Aug 2026</td><td><strong>RELIANCE</strong></td><td><span class="badge badge-buy">BUY</span></td><td>10</td><td>₹2,750</td><td>₹27,500</td></tr>
+                    <tr data-transaction-type="BUY"><td>08 Aug 2026</td><td><strong>TCS</strong></td><td><span class="badge badge-buy">BUY</span></td><td>5</td><td>₹3,420</td><td>₹17,100</td></tr>
+                    <tr data-transaction-type="SELL"><td>05 Aug 2026</td><td><strong>INFY</strong></td><td><span class="badge badge-sell">SELL</span></td><td>10</td><td>₹1,400</td><td>₹14,000</td></tr>
+                    <tr data-transaction-type="BUY"><td>28 Jul 2026</td><td><strong>HDFCBANK</strong></td><td><span class="badge badge-buy">BUY</span></td><td>10</td><td>₹1,500</td><td>₹15,000</td></tr>
+                    <tr data-transaction-type="SELL"><td>22 Jul 2026</td><td><strong>ITC</strong></td><td><span class="badge badge-sell">SELL</span></td><td>10</td><td>₹1,000</td><td>₹10,000</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ADD WATCHLIST MODAL -->
+
+<div class="modal watch-modal" id="watchlistModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add to Watchlist</h2>
+            <button class="close" onclick="closeWatchlistModal()">×</button>
+        </div>
+
+        <form onsubmit="addWatchlistItem(event)">
+            <div class="form-group">
+                <label for="watchSymbol">Stock symbol</label>
+                <input id="watchSymbol" type="text" placeholder="e.g. WIPRO" required>
+            </div>
+            <div class="form-group">
+                <label for="watchCompany">Company name</label>
+                <input id="watchCompany" type="text" placeholder="e.g. Wipro Limited" required>
+            </div>
+            <div class="form-group">
+                <label for="watchPrice">Current price</label>
+                <input id="watchPrice" type="number" min="0" step="0.01" placeholder="e.g. 560" required>
+            </div>
+            <div class="form-group">
+                <label for="watchChange">Today's change (%)</label>
+                <input id="watchChange" type="number" step="0.01" placeholder="e.g. 1.45" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="closeWatchlistModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add to watchlist</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ALLOCATION ANALYSIS MODAL -->
+
+<div class="modal allocation-modal" id="allocationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2>Allocation analysis</h2>
+                <span class="small">Current mix compared with your target</span>
+            </div>
+            <button class="close" onclick="closeAllocationAnalysis()">×</button>
+        </div>
+
+        <div class="allocation-summary">
+            <div class="allocation-card" data-current="50"><span class="small">Stocks</span><strong id="allocationStocksValue">50% current · 42% target</strong><span class="gap" id="allocationStocksGap">+8% overweight</span><label class="allocation-target">Target <input class="allocation-input" id="targetStocks" type="number" min="0" max="100" value="42" oninput="updateAllocationAnalysis()">%</label></div>
+            <div class="allocation-card" data-current="25"><span class="small">ETFs</span><strong id="allocationEtfsValue">25% current · 28% target</strong><span class="gap" id="allocationEtfsGap">-3% gap</span><label class="allocation-target">Target <input class="allocation-input" id="targetEtfs" type="number" min="0" max="100" value="28" oninput="updateAllocationAnalysis()">%</label></div>
+            <div class="allocation-card" data-current="15"><span class="small">Bonds</span><strong id="allocationBondsValue">15% current · 20% target</strong><span class="gap" id="allocationBondsGap">-5% underweight</span><label class="allocation-target">Target <input class="allocation-input" id="targetBonds" type="number" min="0" max="100" value="20" oninput="updateAllocationAnalysis()">%</label></div>
+            <div class="allocation-card" data-current="10"><span class="small">Cash</span><strong id="allocationCashValue">10% current · 10% target</strong><span class="gap" id="allocationCashGap">On target</span><label class="allocation-target">Target <input class="allocation-input" id="targetCash" type="number" min="0" max="100" value="10" oninput="updateAllocationAnalysis()">%</label></div>
+        </div>
+
+        <div class="allocation-recommendation" id="allocationRecommendation"><strong>Suggested rebalance</strong><br>Consider moving approximately 8% from stocks into bonds and ETFs to bring portfolio risk closer to your target profile.</div>
+        <div class="allocation-status" id="allocationStatus"></div>
+
+        <div class="form-actions">
+            <button class="btn btn-outline" onclick="closeAllocationAnalysis()">Close</button>
+            <button class="btn btn-primary" onclick="saveRebalancePlan()">Save rebalance plan</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+/* =========================
+   PERFORMANCE CHART
+========================= */
+
+const performanceCanvas =
+    document.getElementById("performanceChart");
+
+const performancePeriods = {
+
+    "1W": {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Today"],
+        data: [838200, 840750, 839100, 842950, 844180, 845230]
+    },
+
+    "1M": {
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Today"],
+        data: [816500, 823900, 831750, 839800, 845230]
+    },
+
+    "6M": {
+        labels: ["Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"],
+        data: [650000, 680000, 705000, 730000, 765000, 805000, 845230]
+    },
+
+    "1Y": {
+        labels: ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"],
+        data: [548000, 571000, 590500, 614000, 631500, 650000, 680000, 705000, 730000, 765000, 805000, 845230]
+    },
+
+    "ALL": {
+        labels: ["2022", "2023", "2024", "2025", "Jan 2026", "Apr 2026", "Aug 2026"],
+        data: [310000, 392000, 485000, 562000, 631500, 730000, 845230]
+    }
+
+};
+
+const performanceChart = new Chart(performanceCanvas, {
+
+    type: "line",
+
+    data: {
+
+        labels: performancePeriods["6M"].labels,
+
+        datasets: [{
+
+            label: "Portfolio Value",
+
+            data: performancePeriods["6M"].data,
+
+            borderWidth: 3,
+
+            tension: .4,
+
+            fill: true,
+
+            backgroundColor:
+                "rgba(37,99,235,.08)",
+
+            borderColor:
+                "#2563eb",
+
+            pointRadius: 4,
+
+            pointBackgroundColor:
+                "#2563eb",
+
+            pointHoverRadius: 6
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+            legend: {
+                display: false
+            }
+
+        },
+
+        scales: {
+
+            y: {
+
+                ticks: {
+
+                    callback: function(value) {
+
+                        return "₹" +
+                            (value / 1000)
+                            .toFixed(0) +
+                            "K";
+
+                    }
+
+                },
+
+                grid: {
+                    color: "rgba(100,116,139,.1)"
+                }
+
+            },
+
+            x: {
+
+                grid: {
+                    display: false
+                }
+
+            }
+
+        }
+
+    }
+
+});
+
+
+function updatePerformance(period, button) {
+
+    const selectedPeriod = performancePeriods[period];
+
+    performanceChart.data.labels = selectedPeriod.labels;
+    performanceChart.data.datasets[0].data = selectedPeriod.data;
+    performanceChart.update();
+
+    document.querySelectorAll(".periods button").forEach(periodButton => {
+        periodButton.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+}
+
+
+function exportPortfolioReport() {
+
+    const rows = [
+        ["InvestX Portfolio Report"],
+        ["Generated", new Date().toLocaleString()],
+        ["Portfolio Value", "845230"],
+        ["Total Investment", "750000"],
+        ["Total Profit", "95230"],
+        [],
+        ["Asset", "Quantity", "Average Price", "Current Price", "Invested", "Current Value", "P&L", "Return"]
+    ];
+
+    document.querySelectorAll("#holdingsTable tr").forEach(row => {
+        rows.push([...row.querySelectorAll("td")].map(cell => cell.innerText.trim().replace(/\s+/g, " ")));
+    });
+
+    const csv = rows.map(row => row.map(value => {
+        const text = String(value ?? "").replace(/"/g, '""');
+        return `"${text}"`;
+    }).join(",")).join("\n");
+
+    const download = document.createElement("a");
+    download.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    download.download = "investx-portfolio-report.csv";
+    download.click();
+    URL.revokeObjectURL(download.href);
+
+}
+
+
+function openAllocationAnalysis() {
+
+    const savedPlan = JSON.parse(localStorage.getItem("investxRebalancePlan") || "null");
+
+    if (savedPlan) {
+        Object.entries(savedPlan.plan).forEach(([name, value]) => {
+            const inputId = `target${name.replace(" ", "")}`;
+            const input = document.getElementById(inputId);
+            if (input) input.value = value;
+        });
+    }
+
+    updateAllocationAnalysis();
+    document.getElementById("allocationModal").classList.add("show");
+
+}
+
+
+function closeAllocationAnalysis() {
+
+    document.getElementById("allocationModal").classList.remove("show");
+
+}
+
+
+function openWatchlistModal() {
+
+    document.getElementById("watchlistModal").classList.add("show");
+
+}
+
+
+function closeWatchlistModal() {
+
+    document.getElementById("watchlistModal").classList.remove("show");
+
+}
+
+
+function openTransactionsModal() {
+
+    document.getElementById("transactionsModal").classList.add("show");
+
+}
+
+
+function closeTransactionsModal() {
+
+    document.getElementById("transactionsModal").classList.remove("show");
+
+}
+
+
+function filterTransactions(type) {
+
+    const rows = [...document.querySelectorAll("#transactionHistoryTable tbody tr")];
+    const visibleRows = rows.filter(row => type === "ALL" || row.dataset.transactionType === type);
+
+    rows.forEach(row => {
+        row.style.display = visibleRows.includes(row) ? "" : "none";
+    });
+
+    document.getElementById("transactionCount").innerText = `${visibleRows.length} transaction${visibleRows.length === 1 ? "" : "s"}`;
+
+}
+
+
+function addWatchlistItem(event) {
+
+    event.preventDefault();
+
+    const symbol = document.getElementById("watchSymbol").value.trim().toUpperCase();
+    const company = document.getElementById("watchCompany").value.trim();
+    const price = Number(document.getElementById("watchPrice").value);
+    const change = Number(document.getElementById("watchChange").value);
+    const existingSymbols = [...document.querySelectorAll(".watch-symbol")].map(item => item.innerText.toUpperCase());
+
+    if (existingSymbols.includes(symbol)) {
+        alert(`${symbol} is already on your watchlist.`);
+        return;
+    }
+
+    const row = document.createElement("div");
+    row.className = "watch-item";
+    row.innerHTML = `
+        <div>
+            <div class="watch-symbol"></div>
+            <span class="small watch-company"></span>
+        </div>
+        <div class="watch-actions">
+            <div style="text-align:right">
+                <div class="watch-price"></div>
+                <span class="watch-change"></span>
+            </div>
+            <button class="watch-remove" type="button" aria-label="Remove from watchlist">Remove</button>
+        </div>
+    `;
+
+    row.querySelector(".watch-symbol").innerText = symbol;
+    row.querySelector(".watch-company").innerText = company;
+    row.querySelector(".watch-price").innerText = `₹${price.toLocaleString()}`;
+    row.querySelector(".watch-change").innerText = `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
+    row.querySelector(".watch-change").className = `watch-change ${change >= 0 ? "green" : "red"}`;
+    row.querySelector(".watch-remove").onclick = () => row.remove();
+    document.getElementById("watchlist").appendChild(row);
+
+    event.target.reset();
+    closeWatchlistModal();
+
+}
+
+
+function getAllocationTargets() {
+
+    return [
+        { name: "Stocks", current: 50, input: "targetStocks", value: "allocationStocksValue", gap: "allocationStocksGap" },
+        { name: "ETFs", current: 25, input: "targetEtfs", value: "allocationEtfsValue", gap: "allocationEtfsGap" },
+        { name: "Bonds", current: 15, input: "targetBonds", value: "allocationBondsValue", gap: "allocationBondsGap" },
+        { name: "Cash", current: 10, input: "targetCash", value: "allocationCashValue", gap: "allocationCashGap" }
+    ];
+
+}
+
+
+function updateAllocationAnalysis() {
+
+    const allocations = getAllocationTargets();
+    const totalTarget = allocations.reduce((sum, allocation) => sum + Number(document.getElementById(allocation.input).value || 0), 0);
+    const recommendation = document.getElementById("allocationRecommendation");
+
+    allocations.forEach(allocation => {
+        const target = Number(document.getElementById(allocation.input).value || 0);
+        const difference = allocation.current - target;
+        const value = document.getElementById(allocation.value);
+        const gap = document.getElementById(allocation.gap);
+        const card = value.closest(".allocation-card");
+
+        value.innerText = `${allocation.current}% current · ${target}% target`;
+        gap.innerText = difference === 0 ? "On target" : `${difference > 0 ? "+" : ""}${difference}% ${difference > 0 ? "overweight" : "underweight"}`;
+        card.classList.toggle("overweight", difference > 0);
+        card.classList.toggle("underweight", difference < 0);
+    });
+
+    if (totalTarget !== 100) {
+        recommendation.innerHTML = `<strong>Target mix must equal 100%</strong><br>Your current target adds up to ${totalTarget}%. Adjust the values before saving the plan.`;
+        return false;
+    }
+
+    const overweight = allocations.find(allocation => allocation.current - Number(document.getElementById(allocation.input).value) > 0);
+    const underweight = allocations.filter(allocation => allocation.current - Number(document.getElementById(allocation.input).value) < 0);
+    const overweightGap = overweight ? overweight.current - Number(document.getElementById(overweight.input).value) : 0;
+    const underweightText = underweight.map(allocation => allocation.name).join(" and ");
+
+    recommendation.innerHTML = overweightGap > 0
+        ? `<strong>Suggested rebalance</strong><br>Move approximately ${overweightGap}% from ${overweight.name} into ${underweightText || "your target mix"} to align your portfolio risk.`
+        : `<strong>Allocation is aligned</strong><br>Your current portfolio is at or below each target. No immediate rebalance is required.`;
+
+    return true;
+
+}
+
+
+function saveRebalancePlan() {
+
+    const status = document.getElementById("allocationStatus");
+
+    if (!updateAllocationAnalysis()) {
+        status.className = "allocation-status show error";
+        status.innerText = "Cannot save yet. Target allocation must total exactly 100%.";
+        return;
+    }
+
+    const plan = {};
+
+    getAllocationTargets().forEach(allocation => {
+        plan[allocation.name] = Number(document.getElementById(allocation.input).value);
+    });
+
+    localStorage.setItem("investxRebalancePlan", JSON.stringify({ plan, savedAt: new Date().toLocaleString() }));
+    status.className = "allocation-status show";
+    status.innerText = `Rebalance plan saved at ${new Date().toLocaleTimeString()}. Your target mix is ready for review.`;
+
+}
+
+
+/* =========================
+   ALLOCATION CHART
+========================= */
+
+const allocationCanvas =
+    document.getElementById("allocationChart");
+
+new Chart(allocationCanvas, {
+
+    type: "doughnut",
+
+    data: {
+
+        labels: [
+            "Stocks",
+            "ETFs",
+            "Bonds",
+            "Cash"
+        ],
+
+        datasets: [{
+
+            data: [
+                50,
+                25,
+                15,
+                10
+            ],
+
+            backgroundColor: [
+                "#2563eb",
+                "#7c3aed",
+                "#f59e0b",
+                "#16a34a"
+            ],
+
+            borderWidth: 0
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        cutout: "72%",
+
+        plugins: {
+
+            legend: {
+                display: false
+            }
+
+        }
+
+    }
+
+});
+
+
+/* =========================
+   DARK MODE
+========================= */
+
+function toggleDarkMode() {
+
+    document.body.classList.toggle("dark");
+
+}
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+function toggleSidebar() {
+
+    document
+        .getElementById("sidebar")
+        .classList.toggle("open");
+
+}
+
+document.querySelectorAll(".nav a[href^='#']").forEach(link => {
+    link.addEventListener("click", () => {
+        document.querySelectorAll(".nav a").forEach(item => item.classList.remove("active"));
+        link.classList.add("active");
+        document.getElementById("sidebar").classList.remove("open");
+    });
+});
+
+
+/* =========================
+   MODAL
+========================= */
+
+function openModal() {
+
+    document
+        .getElementById("transactionModal")
+        .classList.add("show");
+
+}
+
+
+function closeModal() {
+
+    document
+        .getElementById("transactionModal")
+        .classList.remove("show");
+
+}
+
+
+/* =========================
+   ADD TRANSACTION
+========================= */
+
+function addTransaction(event) {
+
+    event.preventDefault();
+
+    const symbol =
+        document
+        .getElementById("symbol")
+        .value
+        .toUpperCase();
+
+    const type =
+        document
+        .getElementById("transactionType")
+        .value;
+
+    const quantity =
+        Number(
+            document
+            .getElementById("quantity")
+            .value
+        );
+
+    const price =
+        Number(
+            document
+            .getElementById("price")
+            .value
+        );
+
+    const total =
+        quantity * price;
+
+    const table =
+        document.getElementById(
+            "holdingsTable"
+        );
+
+    const row =
+        table.insertRow();
+
+    row.innerHTML = `
+
+        <td>
+
+            <div class="stock-name">
+
+                <div class="stock-logo">
+                    ${symbol.charAt(0)}
+                </div>
+
+                <div>
+
+                    <strong>
+                        ${symbol}
+                    </strong>
+
+                    <div class="small">
+                        New Investment
+                    </div>
+
+                </div>
+
+            </div>
+
+        </td>
+
+        <td>
+            ${quantity}
+        </td>
+
+        <td>
+            ₹${price.toLocaleString()}
+        </td>
+
+        <td>
+            ₹${price.toLocaleString()}
+        </td>
+
+        <td>
+            ₹${total.toLocaleString()}
+        </td>
+
+        <td>
+            ₹${total.toLocaleString()}
+        </td>
+
+        <td class="small">
+            ₹0
+        </td>
+
+        <td>
+            0%
+        </td>
+
+    `;
+
+    closeModal();
+
+    event.target.reset();
+
+    alert(
+        `${type} transaction added for ${symbol}`
+    );
+
+}
+
+
+/* =========================
+   SEARCH HOLDINGS
+========================= */
+
+function searchStocks() {
+
+    const input =
+        document
+        .getElementById("searchInput")
+        .value
+        .toUpperCase();
+
+    const rows =
+        document
+        .querySelectorAll(
+            "#holdingsTable tr"
+        );
+
+    rows.forEach(row => {
+
+        const text =
+            row.innerText.toUpperCase();
+
+        row.style.display =
+            text.includes(input)
+            ? ""
+            : "none";
+
+    });
+
+}
+
+
+function dismissAlert(button) {
+
+    const alert = button.closest(".management-alert");
+
+    alert.remove();
+
+    const count = document.getElementById("alertCount");
+
+    count.innerText = document.querySelectorAll(".management-alert").length;
+
+}
+
+
+function toggleTableDensity(input) {
+
+    document.querySelectorAll("table").forEach(table => {
+        table.classList.toggle("compact-table", input.checked);
+    });
+
+}
+
+
+function updatePortfolioValue() {
+
+    const valueElement = document.getElementById("portfolioValue");
+
+    const currentText = valueElement.innerText.replace(/[₹,]/g, "");
+
+    let value = Number(currentText);
+
+    value += Math.floor(Math.random() * 1000 - 500);
+
+    valueElement.innerText = "₹" + value.toLocaleString();
+
+}
+
+
+let priceRefreshTimer = setInterval(updatePortfolioValue, 5000);
+
+
+function togglePriceRefresh(input) {
+
+    clearInterval(priceRefreshTimer);
+
+    if (input.checked) {
+        priceRefreshTimer = setInterval(updatePortfolioValue, 5000);
+    }
+
+}
+
+
+/* =========================
+   SIMULATED PRICE UPDATE
+========================= */
+
+</script>
+
+</body>
+</html>
+```
